@@ -114,7 +114,7 @@ fn collect_slots<DB: DatabaseRef>(
 
         let (first_value, second_value) = decode_payload(word);
 
-        cursor = if first_value % 2 == 0 { U256::from(first_value) } else { second_value };
+        cursor = if first_value % U256::from(2) == U256::from(0) { first_value } else { second_value };
     }
 
     if slots.len() == MAX_SLOT_TRAVERSAL_STEPS {
@@ -156,14 +156,14 @@ fn mapping_slot(key: U256, slot: u64) -> U256 {
 }
 
 /// Decodes the packed `Values` struct from a raw storage word.
-fn decode_payload(word: U256) -> (u64, U256) {
+fn decode_payload(word: U256) -> (U256, U256) {
     let first_mask = bitmask(FIRST_FIELD_BITS);
     let second_mask = bitmask(SECOND_FIELD_BITS);
 
     let first = word & first_mask;
     let second = (word >> FIRST_FIELD_BITS) & second_mask;
 
-    (first.as_limbs()[0], second)
+    (first, second)
 }
 
 fn is_unlocked(word: U256) -> bool {
