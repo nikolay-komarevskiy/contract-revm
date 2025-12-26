@@ -2,14 +2,14 @@ use alloy::{
     network::{Ethereum, EthereumWallet},
     node_bindings::{Anvil, AnvilInstance},
     primitives::{Address, B256, U256},
-    providers::{Identity, Provider, RootProvider, builder, fillers::*},
+    providers::{builder, fillers::*, Identity, Provider, RootProvider},
     signers::local::PrivateKeySigner,
     transports::BoxTransport
 };
 use eyre::bail;
 use revm::{
-    DatabaseRef,
-    primitives::{self, Bytecode}
+    primitives::{self, Bytecode},
+    DatabaseRef
 };
 
 use crate::contract_bindings::{self, gate_lock::GateLock::Payload};

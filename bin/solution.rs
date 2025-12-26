@@ -17,6 +17,6 @@ async fn main() -> eyre::Result<()> {
 }
 
 // your solution goes here.
-async fn solve<DB: DatabaseRef>(contract_address: Address, db: DB) -> eyre::Result<bool> {
+async fn solve<DB: DatabaseRef>(_contract_address: Address, _db: DB) -> eyre::Result<bool> {
     Ok(false)
 }

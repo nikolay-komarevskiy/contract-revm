@@ -16,19 +16,19 @@ contract GateLock {
 
     error invalidLength();
 
-    mapping(uint id => uint64 random) internal _a;
+    mapping(uint256 id => uint64 random) internal _a;
     mapping(address id => uint56 random) internal _b;
-    mapping(uint id => Values values) internal valueMap;
+    mapping(uint256 id => Values values) internal valueMap;
     mapping(bytes32 id => uint128 random) internal _c;
-    uint immutable internal totalLength;
+    uint256 internal immutable totalLength;
 
     constructor(Payload[] memory initPayload) {
-        uint length = initPayload.length;
+        uint256 length = initPayload.length;
         totalLength = length;
 
-        uint slot = 0;
+        uint256 slot = 0;
 
-        for (uint i = 0; i < length; i++) {
+        for (uint256 i = 0; i < length; i++) {
             Payload memory cur = initPayload[i];
             Values memory s = Values(cur.firstValue, cur.secondValue, false);
 
@@ -42,16 +42,16 @@ contract GateLock {
         }
     }
 
-    function isSolved(uint[] calldata ids) public view returns (bool res) {
+    function isSolved(uint256[] calldata ids) public view returns (bool res) {
         res = true;
 
-        uint length = ids.length;
+        uint256 length = ids.length;
 
         if (length != totalLength) {
             revert invalidLength();
         }
 
-        for (uint i = 0; i < length; i++) {
+        for (uint256 i = 0; i < length; i++) {
             res = res && valueMap[ids[i]].is_unlocked;
         }
 
