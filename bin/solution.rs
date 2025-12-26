@@ -192,29 +192,11 @@ mod tests {
 
     use crate::{collect_slots, mapping_slot, solve, VALUE_MAP_SLOT};
 
-    fn payload_to_slots(payloads: &[Payload]) -> Vec<U256> {
-        let mut slots = Vec::with_capacity(payloads.len());
-        let mut slot = U256::ZERO;
-
-        for payload in payloads {
-            slots.push(slot);
-
-            slot = if payload.firstValue % 2 == 0 {
-                U256::from(payload.firstValue)
-            } else {
-                let bytes = payload.secondValue.to_be_bytes::<20>();
-                U256::from_be_slice(&bytes)
-            };
-        }
-
-        slots
-    }
-
     #[tokio::test(flavor = "multi_thread")]
     async fn test_empty_payload() -> eyre::Result<()> {
         let controls = spin_up_anvil_instance().await?;
         let payload: Vec<Payload> = vec![];
-        let slots_expected = payload_to_slots(&payload);
+        let slots_expected = vec![];
         let deploy_address = deploy_lock_contract(&controls, payload).await?;
         let mut cache = CacheDB::new(&controls);
         let slots = collect_slots(deploy_address, &mut cache)?;
@@ -228,7 +210,7 @@ mod tests {
         let controls = spin_up_anvil_instance().await?;
         let payload: Vec<Payload> =
             vec![Payload { firstValue: 2, secondValue: U160::from(11u64) }];
-        let slots_expected = payload_to_slots(&payload);
+        let slots_expected = vec![U256::from(0)];
         let deploy_address = deploy_lock_contract(&controls, payload).await?;
         let mut cache = CacheDB::new(&controls);
         let slots = collect_slots(deploy_address, &mut cache)?;
@@ -250,11 +232,18 @@ mod tests {
             Payload { firstValue: 25, secondValue: U160::from(21u64) },
         ];
         // Expected traversal: 0 -> 5 -> 4 -> 9 -> 8 -> 17 -> 6
-        let slots_expected = payload_to_slots(&payload);
+        let slots_expected = vec![
+            U256::from(0),
+            U256::from(5),
+            U256::from(4),
+            U256::from(9),
+            U256::from(8),
+            U256::from(17),
+            U256::from(6),
+        ];
         let deploy_address = deploy_lock_contract(&controls, payload).await?;
         let mut cache = CacheDB::new(&controls);
         let slots = collect_slots(deploy_address, &mut cache)?;
-        assert_eq!(slots_expected.len(), 7);
         assert_eq!(slots, slots_expected);
         assert!(solve(deploy_address, controls).await?);
         Ok(())
