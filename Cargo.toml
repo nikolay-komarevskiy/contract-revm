@@ -1,0 +1,51 @@
+cargo-features = ["edition2024"]
+
+[package]
+name = "evm-knowledge"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "solution"
+path = "./bin/solution.rs"
+
+[dependencies]
+alloy = { version = "0.9.2", features = [
+  "rlp",
+  "full",
+  #  "eip712",
+  "node-bindings",
+  "rpc-types-debug",
+  "rpc-types-trace",
+  "json-rpc",
+  "rpc-client",
+  "signer-keystore",
+  "signer-ledger",
+  "signer-mnemonic",
+  "signer-trezor",
+  "signer-yubihsm",
+  "sol-types",
+  "contract",
+] }
+
+tokio = { version = "1.21", features = [
+  "full",
+  "tracing",
+], default-features = false }
+
+
+revm = { version = "19.2.0", features = [
+  "std",
+  "secp256k1",
+  "optional_balance_check",
+  "optional_block_gas_limit",
+], default-features = false }
+
+serde_json = "1.0.94"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+eyre = "0.6.12"
+rand = "0.9.0"
+
+[build-dependencies]
+convert_case = "0.6.0"
+itertools = "0.13.0"
