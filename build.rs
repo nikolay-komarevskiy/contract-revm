@@ -25,7 +25,7 @@ const MIN_FORGE_REQ: &str = ">=1.0.0";
 const CONTRACT_ARTIFACT: &str = "GateLock";
 
 fn main() {
-    eprintln!("Running build.rs");
+    eprintln!("Running build script");
     if let Err(err) = run() {
         panic!("{err}");
     }
@@ -284,12 +284,11 @@ pub mod gate_lock {{
         json_path_str
     );
 
-    let mut file = fs::File::create(&bindings_path).map_err(|e| {
-        format!("Could not create bindings file at {}: {e}", bindings_path.display())
-    })?;
+    let mut file = fs::File::create(&bindings_path)
+        .map_err(|e| format!("could not create bindings at {}: {e}", bindings_path.display()))?;
 
     file.write_all(content.as_bytes())
-        .map_err(|e| format!("Could not write bindings to {}: {e}", bindings_path.display()))?;
+        .map_err(|e| format!("could not write bindings to {}: {e}", bindings_path.display()))?;
 
     eprintln!("Generated bindings at {}", bindings_path.display());
 

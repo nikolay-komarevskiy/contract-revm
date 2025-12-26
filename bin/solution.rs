@@ -15,26 +15,22 @@ use revm::{
     DatabaseRef, Evm
 };
 
-/// Slot index of `valueMap` in the GateLock storage layout (_a = 0, _b = 1,
-/// valueMap = 2).
+/// Storage slot for `valueMap` (_a = 0, _b = 1, valueMap = 2).
 const VALUE_MAP_SLOT: u64 = 2;
-/// Maximum number of mapping entries we scan.
+/// Maximum number of mapping entries to traverse.
 const MAX_SLOT_TRAVERSAL_STEPS: usize = 500;
-/// Arbitrary caller for calling `isSolved` method.
+/// Some arbitrary caller for `isSolved`.
 const CALLER_BYTE: u8 = 0x42;
 /// Gas limit for the transaction.
 const GAS_LIMIT: u64 = 40_000_000;
-/// Bit width of the first field in `Values` (uint64),
-/// occupies 0-63.
+/// Bits used by the first field (uint64, bits 0-63).
 const FIRST_FIELD_BITS: u32 = 64;
-/// Bit width of the second field in `Values` (uint160),
-/// occupies 64-223.
+/// Bits used by the second field (uint160, bits 64-223).
 const SECOND_FIELD_BITS: u32 = 160;
-/// Bit offset of the `isUnlocked` flag in `Values` (64 + 160)
-/// , flag occupies (224-231 bits).
-const UNLOCKED_FLAG_OFFSET: u32 = 224;
-/// Mask for the unlocked flag
-const UNLOCKED_FLAG_MASK: u8 = 255;
+/// Bit offset for `isUnlocked` flag (starts at bit 224).
+const UNLOCKED_FLAG_OFFSET: u32 = FIRST_FIELD_BITS + SECOND_FIELD_BITS;
+/// Single-bit mask for the unlocked flag.
+const UNLOCKED_FLAG_BIT: u8 = 1;
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
@@ -47,8 +43,6 @@ async fn main() -> eyre::Result<()> {
     Ok(())
 }
 
-/// Unlocks the contract and calls `isSolved` in the REVM.
-///
 /// 1) Traverse the list in `valueMap` and find every slot id.
 /// 2) Flip the `isUnlocked` flag for each slot in the REVM cache.
 /// 3) Call `isSolved` for the mutated state.
@@ -87,10 +81,10 @@ async fn solve<DB: DatabaseRef>(contract_address: Address, db: DB) -> eyre::Resu
     Ok(solved)
 }
 
-/// Traverses the `valueMap` mapping starting from key 0, gathering every
+/// Traverses the `valueMap` starting from key 0, gathering every
 /// visited slot id.
 ///
-/// The next slot id is `firstValue` when even, otherwise `secondValue`.
+/// The next slot id is `firstValue` if it is even, otherwise `secondValue`.
 /// Traversal stops when a zero is encountered or limit exceeds.
 fn collect_slots<DB: DatabaseRef>(
     contract_address: Address,
@@ -114,7 +108,8 @@ fn collect_slots<DB: DatabaseRef>(
 
         let (first_value, second_value) = decode_payload(word);
 
-        cursor = if first_value % U256::from(2) == U256::from(0) { first_value } else { second_value };
+        cursor =
+            if first_value % U256::from(2) == U256::from(0) { first_value } else { second_value };
     }
 
     if slots.len() == MAX_SLOT_TRAVERSAL_STEPS {
@@ -146,7 +141,7 @@ fn mark_slots_unlocked<DB: DatabaseRef>(
     Ok(())
 }
 
-/// Computes the storage slot for a Solidity mapping entry
+/// Computes the mapping slot: `keccak256(padded(key) + padded(slot))`.
 fn mapping_slot(key: U256, slot: u64) -> U256 {
     let mut keccak_input = [0u8; 64];
     keccak_input[..32].copy_from_slice(&key.to_be_bytes::<32>());
@@ -167,7 +162,7 @@ fn decode_payload(word: U256) -> (U256, U256) {
 }
 
 fn is_unlocked(word: U256) -> bool {
-    ((word >> UNLOCKED_FLAG_OFFSET) & U256::from(UNLOCKED_FLAG_MASK)) != U256::ZERO
+    ((word >> UNLOCKED_FLAG_OFFSET) & U256::from(UNLOCKED_FLAG_BIT)) != U256::ZERO
 }
 
 fn mark_unlocked(word: U256) -> U256 {
